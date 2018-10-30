@@ -31,39 +31,44 @@ public class Main {
 	
 	public static void main(String[] args) {
 		try {
-			final String csvFile = "/path/to/csv.file";
-			final String destFile = "/path/to/csv.file";
+			final String csvFile = "/path/to/file.csv";
+			final String destFile = "/path/to/file.csv";
 			
-			// Added this since I'm reading a large CSV file. About 80,000+ rows.
-			final int indexStart = 0;
-			final int indexEnd = 74021;
-			
-			long startTime = System.currentTimeMillis();
-//			new Main().initiateRead(csvFile, indexStart, indexEnd, destFile);
-			
-			
-			final String apiKey = "YOUR_API_KEY";
-			UtilityRateFetcher fetcher = new UtilityRateFetcher(apiKey, OpenEI_Format.JSON, 3);
-			
-			String httpsURI = "https://api.openei.org/utility_rates?version=3&format=json&api_key=YOUR_API_KEY&sector=Residential&approved=true&address=50701&direction=desc&orderby=startdate&servicetype=bundled&detail=full&limit=10";
-			fetcher.getRateByZipCode(httpsURI);
-			
-			long endTime = System.currentTimeMillis();
-			System.out.println("Processing Time: " + ((endTime-startTime) * 0.001));
+			/* Added this since I'm reading a large CSV file. About 70,000+ rows.
+			 * 
+			 * OpenEI's USURDB API only allows 1,000 requests per hour. If the 
+			 * allowable 1,000 requests has been reached, the API will return a
+			 * 429 Response Code w/ message "OVER_RATE_LIMIT"
+			 */
+			final int indexStart = 2977;
+			final int indexEnd = 74022;
+			System.out.println("Starting Sequence");
+			new Main().initiateRead(csvFile, indexStart, indexEnd, destFile);
 		} catch (IOException | ParseException e) {
 			System.err.print(e);
 		}
 	}
 	
-	private void initiateRead(String csvFile, int indexStart, int indexEnd, String destFile) {
+	private void initiateRead(String csvFile, int indexStart, int indexEnd, String destFile) throws IOException, ParseException {
+		final String apiKey = "YOUR_API_KEY";
+		UtilityRateFetcher fetcher = new UtilityRateFetcher(apiKey, OpenEI_Format.JSON, 3);
+		
 		FileReader reader = new FileReader();
 		final CkCsv ckCsv = reader.loadCSV(csvFile, true);
 		
+		final String API = "https://api.openei.org/utility_rates?version=3&format=json&"
+				+ "api_key="+apiKey+"&sector=Residential&approved=true&direction=desc"
+				+ "&orderby=startdate&servicetype=bundled&detail=full&limit=10&address=";
+		
 		while (indexStart <= indexEnd) {
-//			String zipCode = ckCsv.getCell(indexStart, 0);
+			String zipCode = ckCsv.getCell(indexStart, 0);
+			System.out.println("("+indexStart + ") Now Processing: "+zipCode);
+			String httpsURI = API + zipCode;
+			String value = fetcher.getRateByZipCode(httpsURI);
+			ckCsv.SetCell(indexStart, 4, value);
+			ckCsv.SaveFile(destFile);
 			indexStart++;
 		}
-		ckCsv.SaveFile(destFile);
 	}
 	
 }

@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -52,10 +53,16 @@ class UtilityRateFetcher {
 		return null;
 	}
 	
-	Double getRateByZipCode(String httpsURI) throws IOException, ParseException {
+	String getRateByZipCode(String httpsURI) throws IOException, ParseException {
 		httpsURI = Objects.requireNonNull(httpsURI, "Required URL of OpenEI's USURDB!");
 		StringBuffer utilities = this.getUtilities(httpsURI);
-		return this.getRate(utilities);
+		if (null == utilities) {
+			return "NO";
+		}
+		JSONParser parser = new JSONParser();
+		JSONObject jobj = (JSONObject)parser.parse(utilities.toString());
+		JSONArray jsonArr = (JSONArray)jobj.get("errors");
+		return (null == jsonArr) ? "YES" : "NO";
 	}
 	
 	private StringBuffer getUtilities(String httpsURI) throws IOException{
@@ -74,6 +81,10 @@ class UtilityRateFetcher {
 			inputLine = null;
 			in.close();
 			in = null;
+		} else {
+			System.err.println("Response Code: "+con.getResponseCode());
+			System.out.println("Terminating Sequence");
+			System.exit(1);
 		}
 		con.disconnect();
 		con = null;
@@ -82,6 +93,9 @@ class UtilityRateFetcher {
 		return utilities;
 	}
 	
+	/*
+	 * in progress 
+	 */
 	private Double getRate(StringBuffer utilities) throws ParseException {
 		if (null == utilities) {
 			return null;
