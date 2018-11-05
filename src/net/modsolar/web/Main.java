@@ -28,46 +28,40 @@ public class Main {
 	      System.exit(1);
 	    }
 	}
-	
+
 	public static void main(String[] args) {
 		try {
-			final String csvFile = "/path/to/file.csv";
-			final String destFile = "/path/to/file.csv";
-			
-			/* Added this since I'm reading a large CSV file. About 70,000+ rows.
-			 * 
-			 * OpenEI's USURDB API only allows 1,000 requests per hour. If the 
-			 * allowable 1,000 requests has been reached, the API will return a
-			 * 429 Response Code w/ message "OVER_RATE_LIMIT"
-			 */
-			final int indexStart = 2977;
-			final int indexEnd = 74022;
 			System.out.println("Starting Sequence");
-			new Main().initiateRead(csvFile, indexStart, indexEnd, destFile);
+			new Main().initiateRead();
 		} catch (IOException | ParseException e) {
 			System.err.print(e);
 		}
 	}
 	
-	private void initiateRead(String csvFile, int indexStart, int indexEnd, String destFile) throws IOException, ParseException {
-		final String apiKey = "YOUR_API_KEY";
+	private void initiateRead() throws IOException, ParseException {
+		final String apiKey = "rAhpJ0Tjtg2q6YAdYlReaZtl4TntH1Mi4BONTqhj";
 		UtilityRateFetcher fetcher = new UtilityRateFetcher(apiKey, OpenEI_Format.JSON, 3);
 		
 		FileReader reader = new FileReader();
+		final String csvFile = "/Users/tensai/Desktop/zip.csv";
 		final CkCsv ckCsv = reader.loadCSV(csvFile, true);
-		
 		final String API = "https://api.openei.org/utility_rates?version=3&format=json&"
 				+ "api_key="+apiKey+"&sector=Residential&approved=true&direction=desc"
 				+ "&orderby=startdate&servicetype=bundled&detail=full&limit=10&address=";
 		
-		while (indexStart <= indexEnd) {
-			String zipCode = ckCsv.getCell(indexStart, 0);
-			System.out.println("("+indexStart + ") Now Processing: "+zipCode);
+		ConfigUtil configUtil = new ConfigUtil("app.properties");
+		configUtil.load();
+		int currentIndex = Integer.parseInt(configUtil.getValue("current_index"));
+		final int indexEnd = Integer.parseInt(configUtil.getValue("max_row"));
+		
+		while (currentIndex <= indexEnd) {
+			String zipCode = ckCsv.getCell(currentIndex, 0);
+			System.out.println("("+currentIndex + ") Now Processing: "+zipCode);
 			String httpsURI = API + zipCode;
-			String value = fetcher.getRateByZipCode(httpsURI);
-			ckCsv.SetCell(indexStart, 4, value);
-			ckCsv.SaveFile(destFile);
-			indexStart++;
+			String value = fetcher.getRateByZipCode(httpsURI, configUtil, currentIndex);
+			ckCsv.SetCell(currentIndex, 4, value);
+			ckCsv.SaveFile(csvFile);
+			currentIndex++;
 		}
 	}
 	

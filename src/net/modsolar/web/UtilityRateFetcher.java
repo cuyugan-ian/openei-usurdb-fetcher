@@ -53,9 +53,9 @@ class UtilityRateFetcher {
 		return null;
 	}
 	
-	String getRateByZipCode(String httpsURI) throws IOException, ParseException {
+	String getRateByZipCode(String httpsURI, ConfigUtil configUtil, int currIndex) throws IOException, ParseException {
 		httpsURI = Objects.requireNonNull(httpsURI, "Required URL of OpenEI's USURDB!");
-		StringBuffer utilities = this.getUtilities(httpsURI);
+		StringBuffer utilities = this.getUtilities(httpsURI, configUtil, currIndex);
 		if (null == utilities) {
 			return "NO";
 		}
@@ -65,7 +65,7 @@ class UtilityRateFetcher {
 		return (null == jsonArr) ? "YES" : "NO";
 	}
 	
-	private StringBuffer getUtilities(String httpsURI) throws IOException{
+	private StringBuffer getUtilities(String httpsURI, ConfigUtil configUtil, int currIndex) throws IOException{
 		StringBuffer utilities = null;
 		URL url = new URL(httpsURI);
 		HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
@@ -84,6 +84,7 @@ class UtilityRateFetcher {
 		} else {
 			System.err.println("Response Code: "+con.getResponseCode());
 			System.out.println("Terminating Sequence");
+			configUtil.setValue("current_index", String.valueOf(currIndex));
 			System.exit(1);
 		}
 		con.disconnect();
