@@ -32,13 +32,23 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			System.out.println("Starting Sequence");
-			new Main().initiateRead();
+			new Main().initiateRateChecker();
 		} catch (IOException | ParseException e) {
 			System.err.print(e);
 		}
 	}
 	
-	private void initiateRead() throws IOException, ParseException {
+	private void initiateRateChecker() throws IOException, ParseException {
+		ConfigUtil configUtil = new ConfigUtil("app.properties");
+		configUtil.load();
+		int currentIndex = Integer.parseInt(configUtil.getValue("current_index"));
+		final int maxRow = Integer.parseInt(configUtil.getValue("max_row"));
+		
+		if (currentIndex > maxRow) {
+			System.out.println("Sequence Complete!");
+			System.exit(1);
+		}
+		
 		final String apiKey = "rAhpJ0Tjtg2q6YAdYlReaZtl4TntH1Mi4BONTqhj";
 		UtilityRateFetcher fetcher = new UtilityRateFetcher(apiKey, OpenEI_Format.JSON, 3);
 		
@@ -49,12 +59,7 @@ public class Main {
 				+ "api_key="+apiKey+"&sector=Residential&approved=true&direction=desc"
 				+ "&orderby=startdate&servicetype=bundled&detail=full&limit=10&address=";
 		
-		ConfigUtil configUtil = new ConfigUtil("app.properties");
-		configUtil.load();
-		int currentIndex = Integer.parseInt(configUtil.getValue("current_index"));
-		final int indexEnd = Integer.parseInt(configUtil.getValue("max_row"));
-		
-		while (currentIndex <= indexEnd) {
+		while (currentIndex <= maxRow) {
 			String zipCode = ckCsv.getCell(currentIndex, 0);
 			System.out.println("("+currentIndex + ") Now Processing: "+zipCode);
 			String httpsURI = API + zipCode;
