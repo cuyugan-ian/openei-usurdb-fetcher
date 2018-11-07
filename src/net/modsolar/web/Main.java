@@ -11,33 +11,30 @@
 package net.modsolar.web;
 
 import java.io.IOException;
-
 import org.json.simple.parser.ParseException;
-
 import com.chilkatsoft.*;
-
 import net.modsolar.constant.OpenEI_Format;
 
 public class Main {
 	
-	static {
-		try {
-			System.loadLibrary("chilkat");
-		} catch (UnsatisfiedLinkError e) {
-	      System.err.println("Native code library failed to load.\n" + e);
-	      System.exit(1);
-	    }
-	}
+    static {
+        try {
+            System.loadLibrary("chilkat");
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println("Native code library failed to load.\n" + e);
+            System.exit(1);
+        }
+    }
 
-	public static void main(String[] args) {
-		try {
-			System.out.println("Starting Sequence");
-			new Main().initiateRateChecker();
-		} catch (IOException | ParseException e) {
-			System.err.print(e);
-		}
-	}
-	
+    public static void main(String[] args) {
+        try {
+            System.out.println("Starting Sequence");
+            new Main().initiateRateChecker();
+        } catch (ParseException | IOException e) {
+            System.err.print(e);
+        }
+    }
+        
 	private void initiateRateChecker() throws IOException, ParseException {
 		ConfigUtil configUtil = new ConfigUtil("app.properties");
 		configUtil.load();
@@ -49,11 +46,11 @@ public class Main {
 			System.exit(1);
 		}
 		
-		final String apiKey = "rAhpJ0Tjtg2q6YAdYlReaZtl4TntH1Mi4BONTqhj";
+		final String apiKey = "YOUR_API_KEY";
 		UtilityRateFetcher fetcher = new UtilityRateFetcher(apiKey, OpenEI_Format.JSON, 3);
 		
 		FileReader reader = new FileReader();
-		final String csvFile = "/Users/tensai/Desktop/zip.csv";
+		final String csvFile = "resources/zip.csv";
 		final CkCsv ckCsv = reader.loadCSV(csvFile, true);
 		final String API = "https://api.openei.org/utility_rates?version=3&format=json&"
 				+ "api_key="+apiKey+"&sector=Residential&approved=true&direction=desc"

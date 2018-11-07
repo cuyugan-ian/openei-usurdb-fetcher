@@ -1,3 +1,9 @@
 .classpath
 .project
 .settings/org.eclipse.jdt.core.prefs
+manifest.mf
+nbproject/
+build.xml
+build/
+bin/
+/dist/
