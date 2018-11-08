@@ -6,6 +6,8 @@
  * 
  * Uses Chilkat libraries.
  * 
+ * Make sure to set right values on Constants
+ * 
  */
 
 package net.modsolar.web;
@@ -13,28 +15,24 @@ package net.modsolar.web;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
 import com.chilkatsoft.*;
-import net.modsolar.constant.OpenEI_Format;
+import net.modsolar.constant.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Main {
     private static final Logger LOGGER = LogManager.getLogger(Main.class.getName());
-    private final String CSV_FILE = "resources/zip.csv";
-    private final String API_KEY = "rAhpJ0Tjtg2q6YAdYlReaZtl4TntH1Mi4BONTqhj";
-    private final UtilityRateFetcher RATE_FETCHER = new UtilityRateFetcher(API_KEY, OpenEI_Format.JSON, 3);
 	
     static {
         try {
             System.loadLibrary("chilkat");
         } catch (UnsatisfiedLinkError e) {
-            System.err.println("Native code library failed to load.\n" + e);
+            LOGGER.error("Native code library failed to load.", e);
             System.exit(1);
         }
     }
 
     public static void main(String[] args) {
         try {
-            LOGGER.info("Starting Sequence");
             new Main().initiateRateChecker();
         } catch (ParseException | IOException e) {
             LOGGER.error(e);
@@ -42,8 +40,8 @@ public class Main {
     }
         
     private void initiateRateChecker() throws IOException, ParseException {
-        ConfigUtil configUtil = new ConfigUtil("app.properties");
-        configUtil.load();
+        LOGGER.info("Starting Sequence");
+        ConfigUtil configUtil = ConfigUtil.getInstance();
         int currentIndex = Integer.parseInt(configUtil.getValue("current_index"));
         final int maxRow = Integer.parseInt(configUtil.getValue("max_row"));
 
@@ -52,26 +50,32 @@ public class Main {
             System.exit(1);
         }
 
+        checkRatePerZipCode(currentIndex, maxRow);
+    }
+    
+    private void checkRatePerZipCode(int currentIndex, int maxRow) throws ParseException, IOException {
         FileReader reader = new FileReader();
-        final CkCsv ckCsv = reader.loadCSV(CSV_FILE, true);
-        final String API = "https://api.openei.org/utility_rates?version=3&format=json&"
-                        + "api_key="+API_KEY+"&sector=Residential&approved=true&direction=desc"
-                        + "&orderby=startdate&servicetype=bundled&detail=full&limit=10&address=";
+        final CkCsv ckCsv = reader.loadCSV(Constants.CSV_FILE.toString(), true);
 
         while (currentIndex <= maxRow) {
             String zipCode = ckCsv.getCell(currentIndex, 0);
-            LOGGER.info("("+currentIndex + ") ZIP CODE: "+zipCode);
-            String httpsURI = API + zipCode;
-            checkRateAvailability(httpsURI, configUtil, currentIndex, ckCsv);
+            LOGGER.info("("+currentIndex+") ZIP CODE: "+zipCode);
+            checkRateAvailability(getURI(zipCode), currentIndex, ckCsv);
             currentIndex++;
         }
     }
 
-    private void checkRateAvailability(String httpsURI, ConfigUtil configUtil, 
-            int currentIndex, CkCsv ckCsv) throws ParseException, IOException {
-        String value = RATE_FETCHER.checkRateAvailability(httpsURI, configUtil, currentIndex);
+    private void checkRateAvailability(String httpsURI, int currentIndex, 
+            CkCsv ckCsv) throws ParseException, IOException {
+        String value = UtilityRateFetcher.checkRateAvailability(httpsURI, currentIndex);
         ckCsv.SetCell(currentIndex, 4, value);
-        ckCsv.SaveFile(CSV_FILE);
+        ckCsv.SaveFile(Constants.CSV_FILE.toString());
+    }
+    
+    private String getURI(String zipCode) {
+        return "https://api.openei.org/utility_rates?version=3&format=json&"
+            + "api_key="+Constants.API_KEY+"&sector=Residential&approved=true&direction=desc"
+                + "&orderby=startdate&servicetype=bundled&detail=full&limit=10&address="+zipCode;
     }
 	
 }
