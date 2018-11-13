@@ -62,4 +62,31 @@ class FileReader {
         return mappedValues;
     }
     
+    /*
+     * Counts data per Zip Code. 
+     * Saves Zip Code as Key and call counts as Value.
+     * Returns a Map
+     */
+    Map<String, Integer> countPerZipCode(CkCsv ckCsv, int column, int maxRow) {
+        if (null == ckCsv) {
+            throw new NullPointerException("CKCSV parameter contains null value!");
+        }
+        Map<String, Integer> mappedValues = new HashMap<String, Integer>();
+        
+        for (int i=0; i<=maxRow; i++) {
+            String cellValue = ckCsv.getCell(i, 0);
+            if (null == cellValue || cellValue.trim().isEmpty()) {
+                continue;
+            } else if (mappedValues.containsKey(cellValue)){
+                int valCount = mappedValues.get(cellValue);
+                valCount++;
+                mappedValues.put(cellValue, valCount);
+            } else {
+                mappedValues.put(cellValue, 1);
+            }
+        }
+        
+        return mappedValues;
+    }
+    
 }
