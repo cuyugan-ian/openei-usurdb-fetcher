@@ -15,10 +15,7 @@ package net.modsolar.web;
 import java.io.IOException;
 import org.json.simple.parser.ParseException;
 import com.chilkatsoft.*;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import static java.util.Map.Entry.comparingByValue;
-import static java.util.stream.Collectors.toMap;
 import net.modsolar.constant.Constants;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,7 +33,15 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        new Main().countFrequentlyUsedZipCodes();
+        try {
+            final String fileToRead = "resources/zip_code_requests.csv";
+            final String fileToSave = "resources/report1.csv";
+            
+            ZipCodeSorter sorter = new ZipCodeSorter();
+            sorter.countFrequentlyUsedZipCodes(fileToRead, fileToSave, 1364718);
+        } catch (RuntimeException e) {
+            LOGGER.error("Error!", e);
+        }
     }
         
     private void initiateRateChecker() {
@@ -72,7 +77,7 @@ public class Main {
     private void checkRateAvailability(String httpsURI, int currentIndex, 
             CkCsv ckCsv) throws ParseException, IOException {
         String value = UtilityRateFetcher.checkRateAvailability(httpsURI, currentIndex);
-        ckCsv.SetCell(currentIndex, 4, value);
+        ckCsv.SetCell(currentIndex, 2, value);
         ckCsv.SaveFile(Constants.CSV_FILE.toString());
     }
     
@@ -100,44 +105,4 @@ public class Main {
         System.out.println("NO: "+noCount);
     }
     
-    /*
-     * Reads all Zip Codes calls by Licensed Active users of modsolar platform. 
-     */
-    private void countFrequentlyUsedZipCodes() {
-        final int maxRow = 1366431;
-        final String file = "PATH_TO_FILE.csv";
-        final FileReader reader = new FileReader();
-        final CkCsv ckCsv = reader.loadCSV(file, true);
-        
-        Map<String, Integer> mappedValues = reader.countPerZipCode(ckCsv, 4, maxRow);
-        if (null == mappedValues || mappedValues.isEmpty()) {
-            LOGGER.error("Empty Map");
-            System.exit(1);
-        }
-        
-        sortAndSaveToFile(mappedValues);
-    }
-   
-    /*
-     * Sorts the Map from lowest to highest call counts.
-     * Saves Zip Codes and Call count to a CSV file.
-     */
-    private void sortAndSaveToFile(Map<String, Integer> mappedValues) {
-        Map<String, Integer> sorted = mappedValues.entrySet()
-                .stream().sorted(comparingByValue()).collect(toMap(e -> e.getKey(), e -> e.getValue(), 
-                        (e1, e2) -> e2, LinkedHashMap::new));
-        
-        final String file = "PATH_TO_FILE.csv";
-        final FileReader reader = new FileReader();
-        final CkCsv ckCsv = reader.loadCSV(file, true);
-        
-        int index = 0;
-        for (Map.Entry<String, Integer> entry : sorted.entrySet()) {
-            ckCsv.SetCell(index, 0, entry.getKey());
-            ckCsv.SetCell(index, 1, String.valueOf(entry.getValue()));
-            index++;
-        }
-        ckCsv.SaveFile(file);
-    }
-	
 }

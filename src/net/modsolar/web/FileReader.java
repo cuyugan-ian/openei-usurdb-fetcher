@@ -12,6 +12,7 @@ import java.util.Objects;
 import com.chilkatsoft.*;
 import java.util.HashMap;
 import java.util.Map;
+import net.modsolar.pojo.ZipCount;
 
 class FileReader {
 	
@@ -23,6 +24,9 @@ class FileReader {
 
         CkCsv ckCsv = new CkCsv();
         ckCsv.put_HasColumnNames(withHeaders);
+        //used this to set delimeter of csv file
+        //ckCsv.put_Delimiter("\t");
+        
         if (!ckCsv.LoadFile(csvFile)) {
             throw new NullPointerException("CSV file not found!");
         }
@@ -67,26 +71,30 @@ class FileReader {
      * Saves Zip Code as Key and call counts as Value.
      * Returns a Map
      */
-    Map<String, Integer> countPerZipCode(CkCsv ckCsv, int column, int maxRow) {
+    Map<String, ZipCount> countPerZipCode(CkCsv ckCsv, int column, int maxRow) {
         if (null == ckCsv) {
             throw new NullPointerException("CKCSV parameter contains null value!");
         }
-        Map<String, Integer> mappedValues = new HashMap<String, Integer>();
+        Map<String, ZipCount> mappedValues = new HashMap<String, ZipCount>();
         
         for (int i=0; i<=maxRow; i++) {
             String cellValue = ckCsv.getCell(i, 0);
+            System.out.println("Reading ("+i+") Zip Code: "+cellValue);
             if (null == cellValue || cellValue.trim().isEmpty()) {
                 continue;
             } else if (mappedValues.containsKey(cellValue)){
-                int valCount = mappedValues.get(cellValue);
-                valCount++;
-                mappedValues.put(cellValue, valCount);
+                ZipCount zipCount = mappedValues.get(cellValue);
+                zipCount.incrementCount();
+                mappedValues.put(cellValue, zipCount);
             } else {
-                mappedValues.put(cellValue, 1);
+                String state = ckCsv.getCell(i, 1);
+                ZipCount zipCount = new ZipCount(state, 1);
+                mappedValues.put(cellValue, zipCount);
             }
         }
         
         return mappedValues;
     }
+    
     
 }
