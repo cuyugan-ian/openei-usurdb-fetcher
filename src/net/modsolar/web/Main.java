@@ -34,11 +34,11 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            final String fileToRead = "resources/zip_code_requests.csv";
-            final String fileToSave = "resources/report1.csv";
+            final String fileToRead = "resources/per_installers/buffalo_solar_solutions.csv";
+            final String fileToSave = "resources/per_installers/reports/buffalo_solar_solutions.csv";
+            final int maxRow = 127264;
             
-            ZipCodeSorter sorter = new ZipCodeSorter();
-            sorter.countFrequentlyUsedZipCodes(fileToRead, fileToSave, 1364718);
+            new FileReader().groupInstallerUsage(fileToRead, maxRow, fileToSave);
         } catch (RuntimeException e) {
             LOGGER.error("Error!", e);
         }
